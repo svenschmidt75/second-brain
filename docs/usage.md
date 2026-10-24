@@ -31,3 +31,14 @@ uv run python -m second_brain
 | `LOG_FILE`  | `app.log`  | Path to the log file                 |
 
 Copy `.env.example` to `.env` for development defaults, then run with `uv run --env-file .env`.
+
+## Logging
+
+Console (stderr) lines use a compact format: no milliseconds, a 3-letter level code
+(`DEB`, `INF`, `WAR`, `ERR`, ...) and `|` before the message. Colors are kept on a tty.
+
+```
+2026-10-24 12:00:00 | INF | second_brain.app:main:42 | Hello from second_brain!
+```
+
+The file log (`LOG_FILE`) keeps loguru's default format.
