@@ -17,6 +17,8 @@ theme:
   features:
     - content.code.copy
     - navigation.footer
+    - navigation.sections
+    - navigation.expand
 
 plugins:
   - search
@@ -32,10 +34,18 @@ markdown_extensions:
   - admonition
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
 
 nav:
   - Home: index.md
   - Usage: usage.md
   - API Reference: api.md
+  - Diagrams:
+      - Package Overview: diagram-overview.md
+      - Entry Points: diagram-entrypoints.md
+      - User Flow: diagram-user-flow.md
