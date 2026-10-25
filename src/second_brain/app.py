@@ -1,7 +1,11 @@
+import os
 import sys
+from pathlib import Path
 
 from loguru import logger
 
+APP_NAME = "second_brain"
+LOG_FILE_NAME = "app.log"
 LEVEL_SHORT_NAMES = {
     "TRACE": "TRC",
     "DEBUG": "DBG",
@@ -39,22 +43,47 @@ def stderr_format(record: dict) -> str:
     )
 
 
-def configure_logging():
+def log_file_path() -> Path:
+    """Return the log file path.
+
+    `LOG_FILE` wins when set and non-empty (`~` is expanded; a relative path
+    stays relative to the current directory). Otherwise the file lives in the
+    per-user XDG state directory, e.g. `~/.local/state/second_brain/app.log`.
+    A relative or empty `XDG_STATE_HOME` is ignored, as the XDG spec requires.
+
+    Returns:
+        The log file path; absolute unless `LOG_FILE` is a relative path.
+    """
+    override = os.environ.get("LOG_FILE")
+    if override:
+        return Path(override).expanduser()
+    xdg_state_home = Path(os.environ.get("XDG_STATE_HOME", ""))
+    state_dir = (
+        xdg_state_home if xdg_state_home.is_absolute() else Path.home() / ".local/state"
+    )
+    return state_dir / APP_NAME / LOG_FILE_NAME
+
+
+def configure_logging() -> None:
     """Configure loguru for console and file logging.
 
     Removes the default handler and sets up:
     - stderr handler at LOG_LEVEL (default: INFO, configurable via env var),
       using the compact `stderr_format`
-    - File handler at DEBUG level writing to LOG_FILE (default: app.log),
-      using loguru's default format
+    - File handler at DEBUG level writing to `log_file_path()`, using loguru's
+      default format. The parent directory is created with mode 0700. If the
+      file cannot be set up, one warning is logged and the run continues
+      without a file handler.
     """
-    import os
-
     log_level = os.environ.get("LOG_LEVEL", "INFO")
-    log_file = os.environ.get("LOG_FILE", "app.log")
+    log_file = log_file_path()
     logger.remove()
     logger.add(sys.stderr, level=log_level, format=stderr_format)
-    logger.add(log_file, level="DEBUG", rotation="50 KB", retention=1)
+    try:
+        log_file.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        logger.add(log_file, level="DEBUG", rotation="50 KB", retention=1)
+    except OSError as error:
+        logger.warning("Log file disabled, cannot use {}: {}", log_file, error)
 
 
 @logger.catch

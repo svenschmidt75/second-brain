@@ -52,7 +52,7 @@ cp .env.example .env
 ```
 
 - `LOG_LEVEL` — default: `INFO`. Set to `DEBUG` in `.env` for verbose console output.
-- `LOG_FILE` — default: `app.log`. Path to the log file.
+- `LOG_FILE` — default: `$XDG_STATE_HOME/second_brain/app.log` (`~/.local/state/second_brain/app.log` if unset). Path to the log file; `~` is expanded, a relative path is relative to the current directory.
 - `SECOND_BRAIN_DIR` — default: `~/second_brain/`. Directory where notes are stored.
 
 Note that `uv run --env-file .env` loads the dev environment explicitly (no auto-loading).
@@ -65,7 +65,7 @@ Console (stderr) lines are compact, with three-letter level names (`TRC`, `DBG`,
 2026-10-24 19:45:00 | INF | second_brain.app:main:67 | Hello from second_brain!
 ```
 
-The log file (`LOG_FILE`) keeps loguru's default format with milliseconds. See [docs/usage.md](docs/usage.md#log-format) for details.
+The log file (`LOG_FILE`, by default in the per-user state directory, not the current directory) keeps loguru's default format with milliseconds. If it cannot be created, a warning is logged and the command still runs. See [docs/usage.md](docs/usage.md#log-format) for details.
 
 ## Testing
 

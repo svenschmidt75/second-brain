@@ -1,5 +1,7 @@
 """Shared test fixtures."""
 
+from pathlib import Path
+
 import pytest
 
 
@@ -14,3 +16,18 @@ def tmp_note_dir(tmp_path, monkeypatch):
     d = tmp_path / "notes"
     monkeypatch.setenv("SECOND_BRAIN_DIR", str(d))
     return d
+
+
+@pytest.fixture
+def default_log_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Unset LOG_FILE and XDG_STATE_HOME and point HOME at a temp directory.
+
+    Returns:
+        The fake home directory.
+    """
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.delenv("LOG_FILE", raising=False)
+    monkeypatch.delenv("XDG_STATE_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(home))
+    return home

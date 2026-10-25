@@ -147,7 +147,7 @@
   <div class="chips">
     <div class="chip" style="--c:var(--teal)"><b>SECOND_BRAIN_DIR</b><p>📁 Where notes live. Default: <code>~/second_brain/</code></p></div>
     <div class="chip" style="--c:var(--yellow)"><b>LOG_LEVEL</b><p>📣 How chatty the stderr log is: TRACE → CRITICAL. Default: <code>INFO</code></p></div>
-    <div class="chip" style="--c:var(--pink)"><b>LOG_FILE</b><p>🗒️ Debug-level log file, rotates at 50 KB. Default: <code>app.log</code></p></div>
+    <div class="chip" style="--c:var(--pink)"><b>LOG_FILE</b><p>🗒️ Debug-level log file, rotates at 50 KB. Default: <code>~/.local/state/second_brain/app.log</code></p></div>
   </div>
   <p class="sec-sub" style="margin-top:14px">💡 Results go to <b>stdout</b>, log lines go to <b>stderr</b> — so <code>second_brain list | grep idea</code> stays clean.</p>
 </section>
@@ -355,7 +355,7 @@ const FILES = {
   "app.py": {
     icon: "📣", color: "var(--pink)", kind: "Logging setup", lines: 67,
     summary: "Configures loguru so the app can talk without cluttering results. Compact coloured lines go to stderr; a rotating debug log goes to a file.",
-    points: ["`configure_logging()` — LOG_LEVEL (stderr) and LOG_FILE (debug, 50 KB rotation)", "`stderr_format()` — lines like `2026-10-24 19:45:00 | INF | module:func:67 | Hello!`", "`LEVEL_SHORT_NAMES` — INFO → INF, WARNING → WRN …", "`main()` — a tiny hello to prove logging works"],
+    points: ["`configure_logging()` — LOG_LEVEL (stderr) and LOG_FILE or the XDG state dir (debug, 50 KB rotation)", "`stderr_format()` — lines like `2026-10-24 19:45:00 | INF | module:func:67 | Hello!`", "`LEVEL_SHORT_NAMES` — INFO → INF, WARNING → WRN …", "`main()` — a tiny hello to prove logging works"],
     calls: [],
   },
   "__main__.py": {

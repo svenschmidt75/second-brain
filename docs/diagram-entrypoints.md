@@ -14,7 +14,7 @@ flowchart LR
 
     subgraph env["Environment variables"]
         v_level["LOG_LEVEL<br/>default INFO"]
-        v_file["LOG_FILE<br/>default app.log"]
+        v_file["LOG_FILE<br/>default ~/.local/state/second_brain/app.log"]
         v_dir["SECOND_BRAIN_DIR<br/>default ~/second_brain/"]
     end
 

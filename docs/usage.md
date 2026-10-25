@@ -73,7 +73,7 @@ lines and errors go to stderr, so stdout can be piped or captured safely.
 | Variable           | Default            | Description                        |
 |--------------------|--------------------|------------------------------------|
 | `LOG_LEVEL`        | `INFO`             | Console log level (DEBUG, INFO, …) |
-| `LOG_FILE`         | `app.log`          | Path to the log file               |
+| `LOG_FILE`         | `~/.local/state/second_brain/app.log` | Path to the log file    |
 | `SECOND_BRAIN_DIR` | `~/second_brain/`  | Directory where notes are stored   |
 
 Copy `.env.example` to `.env` for development defaults, then run with `uv run --env-file .env`.
@@ -102,5 +102,9 @@ Levels are shown as three-letter abbreviations:
 Custom levels show the first three characters of their name. Output is
 colorized when stderr is a terminal and plain otherwise (e.g. when piped).
 
-The log file (`LOG_FILE`) keeps loguru's default, more detailed format with
+The log file defaults to `$XDG_STATE_HOME/second_brain/app.log`, falling back to
+`~/.local/state/second_brain/app.log` when `XDG_STATE_HOME` is unset, empty or
+relative. Set `LOG_FILE` to override it (`~` is expanded; a relative path is
+relative to the current directory). If the file cannot be created, a warning is
+logged and the command still runs. It keeps loguru's default, more detailed format with
 milliseconds and full level names.
