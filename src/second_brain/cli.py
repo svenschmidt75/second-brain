@@ -9,8 +9,9 @@ from second_brain.app import configure_logging
 from second_brain.notes import create_note, list_note_files, notes_dir, read_note
 
 
-@click.group()
-def cli():
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx: click.Context):
     """second_brain -- capture and organise your thoughts.
 
     Notes are plain markdown files, stored in the directory named by the
@@ -24,9 +25,14 @@ def cli():
       second_brain list                   # numbered list, newest first
       second_brain show 1                 # print note 1
 
+    Run without a command to open the interactive TUI.
     Run `second_brain COMMAND --help` for details and examples.
     """
     configure_logging()
+    if ctx.invoked_subcommand is None:
+        from second_brain.tui import run_tui
+
+        run_tui()
 
 
 @cli.command()
