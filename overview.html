@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>second_brain — a playful tour</title>
+<style>
+  :root {
+    --bg: #14122b; --panel: #1f1c42; --panel2: #2a2659; --ink: #f4f1ff; --muted: #a9a3d6;
+    --pink: #ff6bb5; --teal: #3de0c5; --yellow: #ffd166; --blue: #6ea8ff; --purple: #b388ff;
+    --red: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 20% -10%, #2c2670 0%, var(--bg) 60%) fixed;
+    color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 80px; }
+  code, pre, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  h1, h2, h3 { margin: 0; }
+
+  /* hero */
+  .hero { text-align: center; padding: 40px 0 24px; }
+  .brain { font-size: 84px; display: inline-block; animation: bob 3s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-10px) rotate(4deg); } }
+  .hero h1 { font-size: clamp(32px, 6vw, 56px); letter-spacing: -1px; }
+  .hero h1 span { background: linear-gradient(90deg, var(--pink), var(--yellow), var(--teal));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { color: var(--muted); max-width: 620px; margin: 12px auto 0; font-size: 18px; }
+
+  /* flow */
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 28px 0 8px; }
+  .flow .step { background: var(--panel); border: 2px solid var(--panel2); border-radius: 16px; padding: 10px 16px; font-weight: 600; }
+  .flow .arrow { color: var(--yellow); font-size: 24px; animation: nudge 1.4s ease-in-out infinite; }
+  @keyframes nudge { 50% { transform: translateX(5px); } }
+
+  section { margin-top: 56px; }
+  .sec-title { font-size: 28px; margin-bottom: 6px; }
+  .sec-sub { color: var(--muted); margin: 0 0 20px; }
+
+  /* command cards */
+  .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .tab {
+    cursor: pointer; border: 2px solid var(--panel2); background: var(--panel); color: var(--ink);
+    border-radius: 14px; padding: 10px 18px; font: inherit; font-weight: 700; transition: transform .15s, border-color .15s;
+  }
+  .tab:hover { transform: translateY(-2px); }
+  .tab[aria-selected="true"] { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
+  .tab .ico { margin-right: 6px; }
+  .card { background: var(--panel); border: 2px solid var(--c, var(--panel2)); border-radius: 20px; padding: 22px; display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 760px) { .card { grid-template-columns: 1fr; } }
+  .card h3 { font-size: 24px; color: var(--c); }
+  .card p { margin: 8px 0; }
+  .usage { background: #0e0c22; border-radius: 10px; padding: 8px 12px; color: var(--yellow); display: block; margin: 10px 0; overflow-x: auto; white-space: pre; }
+  .opts { list-style: none; padding: 0; margin: 10px 0 0; }
+  .opts li { padding: 4px 0; }
+  .opts code { color: var(--teal); }
+  .exs { margin-top: 12px; }
+  .ex { display: block; width: 100%; text-align: left; cursor: pointer; background: #0e0c22; color: var(--ink);
+    border: 1px solid var(--panel2); border-radius: 10px; padding: 8px 12px; margin: 6px 0; font-size: 13px; overflow-x: auto; white-space: pre; }
+  .ex:hover { border-color: var(--c); }
+  .ex::before { content: "▶ "; color: var(--c); }
+
+  /* visual stage */
+  .stage { background: #0e0c22; border-radius: 14px; padding: 16px; min-height: 260px; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+  .stage-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .terminal { background: #07061a; border-radius: 10px; padding: 10px 12px; font-size: 13px; min-height: 90px; white-space: pre-wrap; word-break: break-word; }
+  .terminal .p { color: var(--teal); }
+  .terminal .err { color: var(--red); }
+  .terminal .dim { color: var(--muted); }
+  .folder { border: 2px dashed var(--panel2); border-radius: 12px; padding: 10px; flex: 1; min-height: 100px; }
+  .folder-head { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .file { display: flex; gap: 8px; align-items: center; background: var(--panel2); border-radius: 8px; padding: 5px 10px; margin: 4px 0; font-size: 12px; animation: pop .4s cubic-bezier(.2,1.6,.4,1); }
+  .file.hl { outline: 2px solid var(--yellow); }
+  .file .n { color: var(--yellow); font-weight: 700; min-width: 18px; }
+  @keyframes pop { from { transform: scale(.3) translateY(-20px); opacity: 0; } }
+  .note-paper { background: #fff9e6; color: #3a3320; border-radius: 6px; padding: 10px 14px; font-size: 12px; animation: pop .4s; transform: rotate(-1deg); box-shadow: 4px 6px 0 rgba(0,0,0,.35); }
+  .reset { align-self: flex-end; cursor: pointer; background: none; border: 1px solid var(--panel2); color: var(--muted); border-radius: 8px; padding: 3px 10px; font: inherit; font-size: 12px; }
+
+  /* playground */
+  .play { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .play input { flex: 1; min-width: 160px; background: #0e0c22; color: var(--ink); border: 2px solid var(--panel2); border-radius: 10px; padding: 8px 12px; font: 14px ui-monospace, Menlo, monospace; }
+  .play input:focus { outline: none; border-color: var(--c); }
+  .play button { cursor: pointer; background: var(--c); color: #14122b; border: 0; border-radius: 10px; padding: 9px 16px; font-weight: 800; }
+
+  /* env + tips */
+  .chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .chip { background: var(--panel); border-radius: 16px; padding: 16px; border-left: 6px solid var(--c); }
+  .chip b { color: var(--c); font-family: ui-monospace, Menlo, monospace; }
+  .chip p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+
+  /* file explorer */
+  .explorer { display: grid; grid-template-columns: 330px 1fr; gap: 18px; }
+  @media (max-width: 760px) { .explorer { grid-template-columns: 1fr; } }
+  .tree { background: var(--panel); border-radius: 18px; padding: 14px; font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
+  .tree .dir { padding: 3px 4px; color: var(--muted); }
+  .tree .indent { margin-left: 20px; border-left: 2px dotted var(--panel2); padding-left: 8px; }
+  .tree button { all: unset; box-sizing: border-box; display: flex; width: 100%; align-items: center; gap: 8px; cursor: pointer; padding: 6px 8px; border-radius: 10px; transition: background .15s, transform .15s; }
+  .tree button:hover { background: var(--panel2); transform: translateX(3px); }
+  .tree button:focus-visible { outline: 2px solid var(--yellow); }
+  .tree button[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 25%, transparent); box-shadow: inset 4px 0 0 var(--c); }
+  .tree .ico { font-size: 18px; }
+  .detail { background: var(--panel); border-radius: 18px; padding: 22px; border: 2px solid var(--c, var(--panel2)); min-height: 320px; animation: pop .3s; }
+  .detail h3 { color: var(--c); font-size: 26px; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 99px; background: color-mix(in srgb, var(--c) 25%, transparent); color: var(--c); margin: 6px 6px 6px 0; }
+  .detail ul { padding-left: 20px; }
+  .detail li { margin: 4px 0; }
+  .detail code { color: var(--teal); }
+  .calls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .calls button { cursor: pointer; background: var(--panel2); border: 0; color: var(--ink); border-radius: 99px; padding: 5px 14px; font: inherit; font-size: 13px; }
+  .calls button:hover { background: var(--c); color: #14122b; }
+
+  /* architecture picture */
+  .arch { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; align-items: center; margin: 0 0 22px; }
+  .node { padding: 8px 14px; border-radius: 12px; font-family: ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 700; color: #14122b; background: var(--c); }
+  .arch .arrow { color: var(--muted); }
+
+  footer { text-align: center; color: var(--muted); margin-top: 60px; }
+</style>
+</head>
+<body>
+<main>
+
+<header class="hero">
+  <div class="brain">🧠</div>
+  <h1><span>second_brain</span></h1>
+  <p>Capture a thought in one line. It becomes a plain markdown file you own forever. No database, no cloud, no fuss.</p>
+  <div class="flow" aria-label="How it works">
+    <div class="step">💭 You have an idea</div><div class="arrow">➜</div>
+    <div class="step">⌨️ <code>second_brain new</code></div><div class="arrow">➜</div>
+    <div class="step">📄 A <code>.md</code> file appears</div><div class="arrow">➜</div>
+    <div class="step">🔎 <code>list</code> &amp; <code>show</code> it later</div>
+  </div>
+</header>
+
+<!-- ============ SECTION 1: COMMANDS ============ -->
+<section id="commands">
+  <h2 class="sec-title">🎮 Part 1 — The commands</h2>
+  <p class="sub sec-sub">Straight from <code>second_brain --help</code>. Pick a command, then click an example (or type your own) and watch what happens.</p>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="cmdcard"></div>
+</section>
+
+<section id="env">
+  <h2 class="sec-title">🔧 Knobs you can turn</h2>
+  <p class="sec-sub">Set these environment variables (a <code>.env</code> file works too).</p>
+  <div class="chips">
+    <div class="chip" style="--c:var(--teal)"><b>SECOND_BRAIN_DIR</b><p>📁 Where notes live. Default: <code>~/second_brain/</code></p></div>
+    <div class="chip" style="--c:var(--yellow)"><b>LOG_LEVEL</b><p>📣 How chatty the stderr log is: TRACE → CRITICAL. Default: <code>INFO</code></p></div>
+    <div class="chip" style="--c:var(--pink)"><b>LOG_FILE</b><p>🗒️ Debug-level log file, rotates at 50 KB. Default: <code>app.log</code></p></div>
+  </div>
+  <p class="sec-sub" style="margin-top:14px">💡 Results go to <b>stdout</b>, log lines go to <b>stderr</b> — so <code>second_brain list | grep idea</code> stays clean.</p>
+</section>
+
+<!-- ============ SECTION 2: SRC EXPLORER ============ -->
+<section id="files">
+  <h2 class="sec-title">🗺️ Part 2 — Inside <code>src/</code></h2>
+  <p class="sec-sub">Click any file to see what it does. Click the pills inside to jump to related files.</p>
+  <div class="arch" id="arch"></div>
+  <div class="explorer">
+    <div class="tree" id="tree"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+</section>
+
+<footer>Made with 💜 · notes are just markdown — your second brain is yours.</footer>
+</main>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k === "style") n.style.cssText = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  kids.flat().forEach(c => n.append(c));
+  return n;
+};
+// Mirrors notes.slugify closely enough for the demo (accent folding, lowercase, dashes).
+const slugify = t => {
+  const s = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^\p{L}\p{N}_\s-]/gu, "").replace(/[\s-]+/g, "-").replace(/^[-_]+|[-_]+$/g, "");
+  return s || "untitled";
+};
+const pad = n => String(n).padStart(2, "0");
+
+/* ---------- fake notes directory (in-memory simulation) ---------- */
+const seed = () => [
+  { name: "2026-10-20-reading-list.md", body: "# Reading list\n\nClean Code, Fluent Python.\n\n2026-10-20T09:12:03" },
+  { name: "2026-10-22-meeting-notes.md", body: "# Meeting notes\n\nShip the CLI on Friday.\n\n2026-10-22T14:30:41" },
+];
+let notes = seed();
+
+/* ---------- command definitions (text taken from --help) ---------- */
+const COMMANDS = {
+  "": {
+    id: "root", icon: "🧠", color: "var(--purple)", label: "second_brain",
+    usage: "second_brain [OPTIONS] COMMAND [ARGS]...",
+    blurb: "Capture and organise your thoughts. Notes are plain markdown files, stored in the directory named by SECOND_BRAIN_DIR (default: ~/second_brain/).",
+    opts: [["--help", "Show this message and exit."]],
+    examples: ["second_brain --help", "second_brain new \"Caching idea\"", "second_brain list", "second_brain show 1"],
+  },
+  new: {
+    id: "new", icon: "✏️", color: "var(--teal)", label: "new",
+    usage: "second_brain new [OPTIONS] TITLE",
+    blurb: "Create a new note. Writes YYYY-MM-DD-<slug>.md and prints its path. Never overwrites: -1, -2, … is appended.",
+    opts: [["-b, --body TEXT", "Note body (multi-line). Use '-' to read it from stdin."], ["--help", "Show this message and exit."]],
+    examples: [
+      "second_brain new \"Caching idea\"",
+      "second_brain new \"Caching idea\" --body $'Use an LRU.\\n\\nCheck limits.'",
+      "second_brain new \"Café ☕ ideas\"",
+    ],
+  },
+  list: {
+    id: "list", icon: "📋", color: "var(--yellow)", label: "list",
+    usage: "second_brain list [OPTIONS]",
+    blurb: "Prints the notes directory, then one numbered line per note, newest first. Use these numbers with `show`.",
+    opts: [["--help", "Show this message and exit."]],
+    examples: ["second_brain list"],
+  },
+  show: {
+    id: "show", icon: "👀", color: "var(--pink)", label: "show",
+    usage: "second_brain show [OPTIONS] NUMBER",
+    blurb: "Display the contents of note NUMBER (1 is the newest). Missing directory, no notes or a bad number → error on stderr, exit status 1.",
+    opts: [["--help", "Show this message and exit."]],
+    examples: ["second_brain show 1", "second_brain show 99"],
+  },
+};
+
+/* ---------- command runner (simulates the real CLI) ---------- */
+function tokenize(line) {
+  // Tiny shell-ish splitter: handles "double", 'single' and $'ansi-c' quotes.
+  const out = []; const re = /\$'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)"|'([^']*)'|(\S+)/g; let m;
+  while ((m = re.exec(line))) {
+    if (m[1] !== undefined) out.push(m[1].replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\\\/g, "\\"));
+    else if (m[2] !== undefined) out.push(m[2]); else if (m[3] !== undefined) out.push(m[3]); else out.push(m[4]);
+  }
+  return out;
+}
+const sorted = () => [...notes].sort((a, b) => (a.name < b.name ? 1 : -1)); // newest first, like list_note_files
+
+function run(line) {
+  const t = tokenize(line);
+  if (t[0] !== "second_brain") return { err: `command not found: ${t[0] || ""}`, code: 127 };
+  const [cmd, ...rest] = t.slice(1);
+  if (!cmd || cmd === "--help") return { out: helpText("") };
+  if (!COMMANDS[cmd] || cmd === "root") return { err: `Error: No such command '${cmd}'.`, code: 2 };
+  if (rest.includes("--help")) return { out: helpText(cmd) };
+  if (cmd === "list") {
+    const files = sorted();
+    return { out: [`Notes: ~/second_brain`, ...(files.length ? files.map((f, i) => `${i + 1}. ${f.name}`) : ["No notes found."])].join("\n"), highlight: null };
+  }
+  if (cmd === "show") {
+    const n = parseInt(rest[0], 10); const files = sorted();
+    if (Number.isNaN(n)) return { err: `Error: Invalid value for 'NUMBER': '${rest[0] ?? ""}' is not a valid integer.`, code: 2 };
+    if (!files.length) return { err: "Error: No notes found.", code: 1 };
+    if (n < 1 || n > files.length) return { err: `Error: Note ${n} not found. Only ${files.length} notes available.`, code: 1 };
+    return { out: files[n - 1].body.trimEnd(), highlight: n - 1, paper: files[n - 1].body };
+  }
+  if (cmd === "new") {
+    let title = "", body = null;
+    for (let i = 0; i < rest.length; i++) {
+      if (rest[i] === "--body" || rest[i] === "-b") body = rest[++i] ?? "";
+      else if (!title) title = rest[i];
+    }
+    if (!title) return { err: "Error: Missing argument 'TITLE'.", code: 2 };
+    // Same rule as notes.split_title_body: first line = heading, remainder joins body.
+    const lines = title.replace(/\r\n?/g, "\n").replace(/^\n+/, "").split("\n");
+    const heading = lines[0].trim();
+    const parts = [lines.slice(1).join("\n").replace(/^\n+/, "").trimEnd()];
+    if (body !== null) parts.push(body.replace(/\r\n?/g, "\n").replace(/^\n+/, "").trimEnd());
+    const text = parts.filter(Boolean).join("\n\n");
+    const d = new Date(); const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const stamp = `${day}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const stem = `${day}-${slugify(heading)}`;
+    let name = `${stem}.md`, c = 1;
+    while (notes.some(n => n.name === name)) name = `${stem}-${c++}.md`;
+    notes.push({ name, body: [`# ${heading}`, text, stamp].filter(Boolean).join("\n\n") + "\n" });
+    return { out: `/home/you/second_brain/${name}`, created: name };
+  }
+}
+function helpText(cmd) {
+  const c = COMMANDS[cmd];
+  const o = c.opts.map(([f, d]) => `  ${f.padEnd(16)} ${d}`).join("\n");
+  return `Usage: ${c.usage}\n\n  ${c.blurb}\n\nOptions:\n${o}`;
+}
+
+/* ---------- command cards ---------- */
+let current = "";
+const tabsEl = $("#tabs"), cardEl = $("#cmdcard");
+
+function renderTabs() {
+  tabsEl.replaceChildren(...Object.entries(COMMANDS).map(([key, c]) =>
+    el("button", { class: "tab", role: "tab", "aria-selected": String(key === current), style: `--c:${c.color}`,
+      onclick: () => { current = key; renderTabs(); renderCard(); } },
+      el("span", { class: "ico" }, c.icon), key === "" ? "second_brain" : c.label)));
+}
+
+function renderCard() {
+  const c = COMMANDS[current];
+  const term = el("div", { class: "terminal mono" }, el("span", { class: "dim" }, "← click an example below, or type a command"));
+  const folder = el("div", { class: "folder" });
+  const paperSlot = el("div");
+  const input = el("input", { type: "text", value: c.examples[0], "aria-label": "Command to run", spellcheck: "false" });
+
+  const drawFolder = (hl = null, fresh = null) => {
+    const files = sorted();
+    folder.replaceChildren(el("div", { class: "folder-head" }, "📁 ~/second_brain/"),
+      ...(files.length ? files.map((f, i) => el("div", { class: "file" + (i === hl || f.name === fresh ? " hl" : "") },
+        el("span", { class: "n" }, i + 1 + "."), "📄 " + f.name)) : [el("span", { class: "dim" }, "(empty)")]));
+  };
+  const exec = line => {
+    input.value = line;
+    const r = run(line);
+    term.replaceChildren(el("span", { class: "p" }, "$ "), line + "\n",
+      r.err ? el("span", { class: "err" }, r.err + `\n(exit ${r.code})`) : r.out);
+    paperSlot.replaceChildren(r.paper ? el("div", { class: "note-paper mono" }, r.paper.trimEnd()) : "");
+    drawFolder(r.highlight ?? null, r.created ?? null);
+  };
+
+  const exs = el("div", { class: "exs" }, c.examples.map(e => el("button", { class: "ex mono", onclick: () => exec(e) }, e)));
+  const left = el("div", {},
+    el("h3", {}, `${c.icon} ${c.label}`),
+    el("code", { class: "usage" }, c.usage),
+    el("p", {}, c.blurb),
+    el("ul", { class: "opts" }, c.opts.map(([f, d]) => el("li", {}, el("code", {}, f), " — " + d))),
+    exs,
+    el("div", { class: "play" }, input, el("button", { onclick: () => exec(input.value) }, "Run ▶")));
+  input.addEventListener("keydown", e => { if (e.key === "Enter") exec(input.value); });
+  const reset = el("button", { class: "reset", onclick: () => { notes = seed(); renderCard(); } }, "↺ reset folder");
+  const right = el("div", { class: "stage" }, el("div", { class: "stage-label" }, "Live demo (simulated)"), term, folder, paperSlot, reset);
+
+  cardEl.replaceChildren(el("div", { class: "card", style: `--c:${c.color}` }, left, right));
+  drawFolder();
+}
+
+/* ---------- src/ file explorer ---------- */
+const FILES = {
+  "cli.py": {
+    icon: "🎛️", color: "var(--teal)", kind: "Front door", lines: 129,
+    summary: "The command-line interface. Uses Click to define the `second_brain` group and its three commands: new, list and show. It handles user input, prints results to stdout and errors to stderr, and delegates the real work to notes.py.",
+    points: ["`@click.group()` runs configure_logging() before every command", "`new TITLE [--body/-b]` — `--body -` reads stdin", "`list` — numbered, newest first", "`show N` — exits 1 with a friendly error if the dir is missing, empty, or N is out of range"],
+    calls: ["notes.py", "app.py"],
+  },
+  "notes.py": {
+    icon: "📝", color: "var(--yellow)", kind: "Business logic", lines: 121,
+    summary: "Everything about notes themselves, with no CLI or logging concerns. Decides where notes live, turns titles into safe filenames, and reads and writes the markdown files.",
+    points: ["`notes_dir()` — SECOND_BRAIN_DIR or ~/second_brain", "`slugify()` — \"Café ☕\" → `cafe`, never empty (falls back to `untitled`)", "`build_note_path()` — dated filename, adds -1, -2 to avoid overwrites", "`split_title_body()` — first line = heading, the rest = body", "`create_note()` / `list_note_files()` / `read_note()`"],
+    calls: [],
+  },
+  "app.py": {
+    icon: "📣", color: "var(--pink)", kind: "Logging setup", lines: 67,
+    summary: "Configures loguru so the app can talk without cluttering results. Compact coloured lines go to stderr; a rotating debug log goes to a file.",
+    points: ["`configure_logging()` — LOG_LEVEL (stderr) and LOG_FILE (debug, 50 KB rotation)", "`stderr_format()` — lines like `2026-10-24 19:45:00 | INF | module:func:67 | Hello!`", "`LEVEL_SHORT_NAMES` — INFO → INF, WARNING → WRN …", "`main()` — a tiny hello to prove logging works"],
+    calls: [],
+  },
+  "__main__.py": {
+    icon: "🚪", color: "var(--blue)", kind: "Alt entry point", lines: 4,
+    summary: "Makes `python -m second_brain` work exactly like the `second_brain` command. It imports the Click group and runs it.",
+    points: ["Two ways in: the installed script or `python -m second_brain`"],
+    calls: ["cli.py"],
+  },
+  "__init__.py": {
+    icon: "📦", color: "var(--purple)", kind: "Package marker", lines: 0,
+    summary: "An empty file that tells Python \"this folder is a package\". It's quiet, but it's what makes `import second_brain` work.",
+    points: ["Intentionally empty"],
+    calls: [],
+  },
+};
+const TREE = [
+  { dir: "src/", kids: [{ dir: "second_brain/", kids: ["__init__.py", "__main__.py", "app.py", "cli.py", "notes.py"] }] },
+];
+let selected = "cli.py";
+const treeEl = $("#tree"), detailEl = $("#detail");
+
+function treeNode(n) {
+  if (typeof n === "string") {
+    const f = FILES[n];
+    return el("button", { "aria-pressed": String(n === selected), style: `--c:${f.color}`, onclick: () => select(n) },
+      el("span", { class: "ico" }, f.icon), n);
+  }
+  return el("div", {}, el("div", { class: "dir" }, "📂 " + n.dir), el("div", { class: "indent" }, n.kids.map(treeNode)));
+}
+function select(name) { selected = name; renderTree(); renderDetail(); }
+function renderTree() { treeEl.replaceChildren(...TREE.map(treeNode)); }
+function renderDetail() {
+  const f = FILES[selected];
+  const md = s => s.split(/`([^`]+)`/).map((p, i) => i % 2 ? el("code", {}, p) : p);
+  detailEl.style.setProperty("--c", f.color);
+  detailEl.replaceChildren(
+    el("h3", {}, `${f.icon} ${selected}`),
+    el("span", { class: "badge" }, f.kind), el("span", { class: "badge" }, `${f.lines} lines`),
+    el("p", {}, md(f.summary)),
+    el("h4", { style: "margin:14px 0 4px" }, "What's inside"),
+    el("ul", {}, f.points.map(p => el("li", {}, md(p)))),
+    f.calls.length ? el("div", {}, el("h4", { style: "margin:14px 0 4px" }, "Talks to"),
+      el("div", { class: "calls" }, f.calls.map(c => el("button", { onclick: () => select(c) }, `${FILES[c].icon} ${c}`)))) : "");
+  detailEl.style.animation = "none"; void detailEl.offsetWidth; detailEl.style.animation = "";
+}
+
+/* architecture picture: who calls whom */
+$("#arch").replaceChildren(
+  el("div", { class: "node", style: "--c:var(--blue)" }, "⌨️ you"), el("span", { class: "arrow" }, "➜"),
+  el("div", { class: "node", style: "--c:var(--teal)" }, "cli.py"), el("span", { class: "arrow" }, "➜"),
+  el("div", { class: "node", style: "--c:var(--yellow)" }, "notes.py"), el("span", { class: "arrow" }, "➜"),
+  el("div", { class: "node", style: "--c:#fff9e6" }, "📄 .md files"),
+  el("span", { class: "arrow", style: "margin-left:14px" }, "·  logs via"),
+  el("div", { class: "node", style: "--c:var(--pink)" }, "app.py"));
+
+renderTabs(); renderCard(); renderTree(); renderDetail();
+</script>
+</body>
+</html>
