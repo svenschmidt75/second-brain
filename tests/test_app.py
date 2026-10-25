@@ -1,11 +1,13 @@
 import io
 import os
 import re
+import stat
+from pathlib import Path
 
 import pytest
 from loguru import logger
 
-from second_brain.app import configure_logging, main, stderr_format
+from second_brain.app import configure_logging, log_file_path, main, stderr_format
 
 STDERR_LINE = re.compile(
     r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \| INF \| "
@@ -141,3 +143,82 @@ def test_log_file_format_unchanged():
         r"second_brain\.app:main:\d+ - Hello from second_brain!",
         content,
     ), content
+
+
+@pytest.mark.parametrize("xdg", [None, "", "relative/state"])
+def test_log_file_path_default(default_log_env, monkeypatch, xdg):
+    # Arrange
+    if xdg is not None:
+        monkeypatch.setenv("XDG_STATE_HOME", xdg)
+
+    # Act
+    path = log_file_path()
+
+    # Assert
+    assert path == default_log_env / ".local/state/second_brain/app.log"
+    assert path.is_absolute()
+
+
+def test_log_file_path_honors_absolute_xdg_state_home(
+    default_log_env, tmp_path, monkeypatch
+):
+    # Arrange
+    xdg = tmp_path / "xdg"
+    monkeypatch.setenv("XDG_STATE_HOME", str(xdg))
+
+    # Act
+    path = log_file_path()
+
+    # Assert
+    assert path == xdg / "second_brain/app.log"
+
+
+@pytest.mark.parametrize(
+    ("log_file", "expected"),
+    [
+        ("{tmp}/custom/x.log", "{tmp}/custom/x.log"),
+        ("~/logs/x.log", "{home}/logs/x.log"),
+        ("app.log", "app.log"),
+        ("", "{tmp}/xdg/second_brain/app.log"),
+    ],
+)
+def test_log_file_path_override(
+    default_log_env, tmp_path, monkeypatch, log_file, expected
+):
+    # Arrange
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "xdg"))
+    monkeypatch.setenv("LOG_FILE", log_file.format(tmp=tmp_path, home=default_log_env))
+
+    # Act
+    path = log_file_path()
+
+    # Assert
+    assert path == Path(expected.format(tmp=tmp_path, home=default_log_env))
+
+
+def test_configure_logging_creates_private_log_dir(default_log_env):
+    # Act
+    configure_logging()
+
+    # Assert
+    log_dir = default_log_env / ".local/state/second_brain"
+    assert stat.S_IMODE(log_dir.stat().st_mode) == 0o700
+    assert (log_dir / "app.log").is_file()
+
+
+def test_unwritable_log_location_warns_and_continues(tmp_path, monkeypatch, capfd):
+    # Arrange
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory")
+    log_file = blocker / "app.log"
+    monkeypatch.setenv("LOG_FILE", str(log_file))
+
+    # Act
+    configure_logging()
+    logger.info("still logging")
+
+    # Assert
+    err = capfd.readouterr().err
+    assert " | WRN | " in err
+    assert str(log_file) in err
+    assert "still logging" in err

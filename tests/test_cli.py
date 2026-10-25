@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 from click.testing import CliRunner
+from loguru import logger
 
 from second_brain.cli import cli
 
@@ -309,6 +310,7 @@ def test_cli_group_help_lists_commands_and_env_vars():
         assert command in out
     assert "SECOND_BRAIN_DIR" in out
     assert "~/second_brain" in out
+    assert "LOG_FILE" in out
     assert "stderr" in out
 
 
@@ -345,3 +347,40 @@ def test_cli_show_help_explains_number_and_errors():
     assert "second_brain list" in out
     assert "exit" in out.lower()
     assert "stderr" in out
+
+
+# ---------------------------------------------------------------------------
+# log file location
+# ---------------------------------------------------------------------------
+
+
+def test_cli_does_not_write_log_to_cwd(default_log_env, tmp_path, monkeypatch):
+    # Arrange
+    cwd = tmp_path / "cwd"
+    cwd.mkdir()
+    monkeypatch.chdir(cwd)
+
+    # Act
+    result = runner.invoke(cli, ["list"])
+    logger.remove()  # flush and close the file sink
+
+    # Assert
+    assert result.exit_code == 0
+    assert list(cwd.iterdir()) == []
+    log_file = default_log_env / ".local/state/second_brain/app.log"
+    assert log_file.read_text()
+
+
+def test_cli_runs_when_log_location_unwritable(tmp_note_dir, tmp_path, monkeypatch):
+    # Arrange
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory")
+    monkeypatch.setenv("LOG_FILE", str(blocker / "app.log"))
+
+    # Act
+    result = runner.invoke(cli, ["new", "Still works"])
+
+    # Assert
+    assert result.exit_code == 0
+    assert len(list(tmp_note_dir.glob("*.md"))) == 1
+    assert " | WRN | " in result.output
